@@ -1,5 +1,4 @@
 import cv2
-import os
 import sys
 import tempfile
 from arg_parser import arg_parser, ArgFlag, ArgParameter
@@ -28,6 +27,8 @@ def split_video_to_frames(movie_input, tmp_path, jpeg_quality):
     count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     print(f'Input frame count: {count} ({width} x {height}) @ {fps:.2f} fps')
+
+    print('Decomposing the source movie...')
 
     frame_counter = 0
     for _ in progress_bar(range(count)):
@@ -78,10 +79,9 @@ def smart_transformer(writer, width, height, count, temp_dir, batch_size):
         if dest_frame_id not in descriptors:
             descriptors[dest_frame_id] = make_new_np_frame_mmapped(dest_frame_id)
 
-    print('Reading frames...')
+    print('Doing transformation...')
 
     for x, source_frame_id in progress_bar(list(remapper_gen(width, count))):
-        #  x, номер исходного кадра
         source_frame = image_loader(source_frame_id, temp_dir)
         for _, dest_frame_id in remapper_gen(count, width):
             new_frame = descriptors[dest_frame_id]
@@ -125,8 +125,8 @@ def do_work(config: dict):
         width, height, fps, count = split_video_to_frames(input_file, temp_dir, jpeg_quality)
 
         if width > count:
-            print(f'Warning! Frame count ({count}) is less then the width ({width}).')
-            print(f'Ideally it should have length of {(width / fps):.1f} sec')
+            print(f'Warning! Frame count ({count}) is less then the width ({width}). '
+                  f'Ideally it should have length of {(width / fps):.1f} sec')
 
         fourcc = config['codec']
         out_movie = cv2.VideoWriter(output_file,
