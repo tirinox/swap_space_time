@@ -4,7 +4,8 @@ import sys
 import tempfile
 from arg_parser import arg_parser, ArgFlag, ArgParameter
 import util
-from functools import lru_cache
+import numpy as np
+import tqdm
 
 
 def get_input_frame_name(index, tmp_dir):
@@ -44,14 +45,48 @@ def split_video_to_frames(movie_input, tmp_path, jpeg_quality):
     return width, height, fps, frame_counter
 
 
-@lru_cache(maxsize=100)
 def image_feed(frame_index, tmp_path):
+    print('read img', frame_index)
     return cv2.imread(get_input_frame_name(frame_index, tmp_path), cv2.IMREAD_COLOR)
+
+
+def partial_frame_name(index, tmp_path):
+    return util.get_file_name(index, tmp_path, prefix='pf', ext='npy')
+
+
+def save_part_frame(data: np.array, frame_index, tmp_path):
+    data.save(partial_frame_name(frame_index, tmp_path))
+
+
+def load_part_frame(frame_index, tmp_path):
+    try:
+        return np.load(partial_frame_name(frame_index, tmp_path))
+    except FileNotFoundError:
+        return None
 
 
 def remapper_gen(from_dim, to_dim):
     for i in range(from_dim):
-        yield int(i * to_dim / from_dim)
+        yield i, int(i * to_dim / from_dim)
+
+
+def naive_transformer(output_file, fps, width, height, count, temp_dir):
+    fourcc = config['codec']
+    out_movie = cv2.VideoWriter(output_file,
+                                cv2.VideoWriter_fourcc(*fourcc),
+                                fps, (width, height))
+
+    new_times = list(remapper_gen(count, width))
+
+    for _, new_time in tqdm.tqdm(new_times, unit='frame'):
+        # each is new frame:
+        new_frame = np.ndarray((height, width, 3), dtype=np.uint8)
+        for x, frame in remapper_gen(width, count):
+            old_frame = image_feed(frame, temp_dir)
+
+            new_frame[:, x, :] = old_frame[:, new_time, :]
+        out_movie.write(new_frame)
+    out_movie.release()
 
 
 def do_work(config: dict):
@@ -61,48 +96,21 @@ def do_work(config: dict):
     input_file = config['input']
     output_file = config['output']
 
+    batch_size = int(config['batch'])
+    assert 1 <= batch_size <= 1000
+
     with tempfile.TemporaryDirectory() as temp_dir:
         width, height, fps, count = split_video_to_frames(input_file, temp_dir, jpeg_quality)
 
+        if width > count:
+            print(f'Warning! Frame count ({count}) is less then the width ({width}).')
+            print(f'Ideally it should have length of {(width / fps):.1f} sec')
+
         # out video
         # width => time, time => width
-        # (1280 x 720 x (100 frames) => 1280 (stetch out 100) x 720 (keep) x (1280 frames)
+        # (1280 x 720 x (100 frames) => 1280 (stretch out 100) x 720 (keep) x (1280 frames)
 
-
-    #
-    # cap = cv2.VideoCapture(config['input'])
-    # if not cap.isOpened():
-    #     return
-    #
-    # fps = cap.get(cv2.CAP_PROP_FPS)
-    # width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    # height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    # count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    #
-    # if verbose:
-    #     print(f'Input frame count: {count} ({width} x {height}) @ {fps} fps')
-    #
-    # fourcc = config['codec']
-    # out = cv2.VideoWriter(config['output'], cv2.VideoWriter_fourcc(*fourcc),
-    #                       fps, (width, height))
-    #
-    # os.makedirs('outtemp', exist_ok=True)
-    # i = 0
-    # while cap.isOpened():
-    #     ret, frame = cap.read()
-    #     if ret:
-    #         print(f'Frame: {i}')
-    #         cv2.imshow('Frame', frame)
-    #         out.write(frame)
-    #         cv2.imwrite(f'outtemp/{i}.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-    #         i += 1
-    #         if cv2.waitKey(25) & 0xFF == ord('q'):
-    #             break
-    #     else:
-    #         break
-    #
-    # cap.release()
-    # out.release()
+        naive_transformer(output_file, fps, width, height, count, temp_dir)
 
 
 if __name__ == '__main__':
@@ -111,10 +119,9 @@ if __name__ == '__main__':
         ArgParameter('output', True),
         ArgParameter('codec', False, 'x264'),
         ArgParameter('jpeg-quality', False, 80),
+        ArgParameter('batch', False, 10),
         ArgFlag('verbose'),
     ])
-    verbose = config['verbose'] # global
+    verbose = config['verbose']  # global
 
-    print(list(remapper_gen(220, 45)))
-
-    # do_work(config)
+    do_work(config)
