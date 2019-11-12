@@ -12,3 +12,7 @@ def error(text):
 
 def get_file_name(index, tmp_dir, prefix, ext):
     return os.path.join(tmp_dir, f'{prefix}_{index}.{ext}')
+
+
+def sep(s='-', n=120):
+    print(s * n)
