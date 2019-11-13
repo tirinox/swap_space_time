@@ -29,6 +29,6 @@ def mmap_transformer(writer, width, height, count, temp_dir, batch_size):
     print('Coding output movie...')
 
     for _, dest_frame_id in progress_bar(list(remapper_gen(count, width))):
-        writer.write(descriptors[dest_frame_id])
+        writer(descriptors[dest_frame_id])
 
     print('Cleaning up trash...')

@@ -42,8 +42,8 @@ def do_work(config: dict):
         # out video
         # width => time, time => width
         # (1280 x 720 x (100 frames) => 1280 (stretch out 100) x 720 (keep) x (1280 frames shrink to 100)
-
-        transformer(out_movie, width, height, count, temp_dir, batch_size)
+        writer = lambda frame: out_movie.write(frame)
+        transformer(writer, width, height, count, temp_dir, batch_size)
 
         out_movie.release()
 
