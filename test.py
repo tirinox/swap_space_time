@@ -2,7 +2,7 @@ from swspt.batched import batched_transformer
 from tempfile import TemporaryDirectory
 import os
 import numpy as np
-import cv2
+import cv2 as cv2
 
 
 def test_bt1():
@@ -58,6 +58,14 @@ def test_bt1():
             "----",
             "----",
         ]
+        ,
+        [
+            "----",
+            "----",
+            "--aA",
+            "----",
+            "----",
+        ]
     ]))
 
     for i, img in enumerate(images):
@@ -72,11 +80,39 @@ def test_bt1():
         return images[frame_index]
 
     i = 0
+
     def dummy_writer(frame):
         nonlocal i
         cv2.imwrite(f'example/__test_out_{i}.png', frame)
         i += 1
+
     batched_transformer(dummy_writer, 4, 5, 4, tmp_dir, 2, loader)
 
 
-test_bt1()
+def test_bt2():
+    W = 120
+    H = 80
+
+    def pattern(w, h, color1, color2, hs=1):
+        img = np.zeros((h, w, 3), dtype=np.uint8)
+
+        start = 0
+        for y in range(h):
+            i = start
+            for x in range(w):
+                img[y, x] = color1 if i % 2 else color2
+                i += 1
+            start += hs
+        return img
+
+
+    def background(w, h, cw, ch):
+        ...
+
+    for i in range(20):
+        img = pattern(10, 10, (255, 0, 0), (0, 255, 255), hs=i)
+        cv2.imshow('1', img)
+        cv2.waitKey()
+
+
+test_bt2()

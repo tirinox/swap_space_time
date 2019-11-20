@@ -18,7 +18,6 @@ def batched_transformer(out_movie, width, height, count, temp_dir, batch_size, l
 
     image_loader = lru_cache(maxsize=batch_size)(loader)
 
-
     new_times = list(remapper_gen(count, width))
     new_xs = list(remapper_gen(width, count))
 
