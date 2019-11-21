@@ -128,8 +128,11 @@ def make_sample_movie():
     FRAMES = 60
     NAME = './example/gen_sample_video.mp4'
 
+    if os.path.exists(NAME):
+        os.remove(NAME)
+
     out_movie = cv2.VideoWriter(NAME,
-                                cv2.VideoWriter_fourcc(*'avc1'),
+                                cv2.VideoWriter_fourcc(*'mp4v'),
                                 FPS, (W, H))
 
     bg = background(W, H, 20, 20)
@@ -140,6 +143,8 @@ def make_sample_movie():
         frame = bg.copy()
         cv2.circle(frame, (x, y), r, (255, 0, 0), -1)
         cv2.circle(frame, (x, y), r + 10, (255, 255, 255), -1)
+        cv2.putText(frame, f'{fr}', (10, H - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255))
+        cv2.putText(frame, f'{fr}', (W - 40, H - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0))
         # cv2.imshow('1', frame)
         # cv2.waitKey()
         out_movie.write(frame)
