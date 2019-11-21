@@ -55,7 +55,7 @@ if __name__ == '__main__':
         ArgParameter('input', True),
         ArgParameter('output', True),
         ArgParameter('limit', -1),
-        ArgParameter('codec', False, 'x264'),
+        ArgParameter('codec', False, 'avc1'),
         ArgParameter('jpeg-quality', False, 80),
         ArgParameter('batch', False, 10),
         ArgParameter('algo', 'mmap')

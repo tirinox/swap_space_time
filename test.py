@@ -3,6 +3,8 @@ from tempfile import TemporaryDirectory
 import os
 import numpy as np
 import cv2 as cv2
+import math
+from tqdm import tqdm
 
 
 def test_bt1():
@@ -89,30 +91,61 @@ def test_bt1():
     batched_transformer(dummy_writer, 4, 5, 4, tmp_dir, 2, loader)
 
 
-def test_bt2():
-    W = 120
-    H = 80
+def make_sample_movie():
+    def random_color():
+        return np.random.uniform((0, 0, 0), (255, 255, 255)).astype(dtype=np.uint8)
 
-    def pattern(w, h, color1, color2, hs=1):
+    def pattern(w, h, color1, color2, hs=1, dv=20):
         img = np.zeros((h, w, 3), dtype=np.uint8)
-
+        dv2 = dv // 20
         start = 0
         for y in range(h):
             i = start
             for x in range(w):
-                img[y, x] = color1 if i % 2 else color2
+                img[y, x] = color1 if i % dv > dv2 else color2
                 i += 1
             start += hs
         return img
 
 
     def background(w, h, cw, ch):
-        ...
+        ncx = math.ceil(w / cw)
+        ncy = math.ceil(h / ch)
+        over_w = int(ncx * cw)
+        over_h = int(ncy * ch)
+        img = np.zeros((over_h, over_w, 3), dtype=np.uint8)
 
-    for i in range(20):
-        img = pattern(10, 10, (255, 0, 0), (0, 255, 255), hs=i)
-        cv2.imshow('1', img)
-        cv2.waitKey()
+        for x in range(0, over_w, cw):
+            for y in range(0, over_h, ch):
+                color1 = random_color()
+                color2 = random_color()
+                img[slice(y, y + ch), slice(x, x + cw), :] = pattern(cw, ch, color1, color2)
+
+        return img[:h, :w, :]
+
+    FPS = 30
+    W, H = 120, 80
+    FRAMES = 60
+    NAME = './example/gen_sample_video.mp4'
+
+    out_movie = cv2.VideoWriter(NAME,
+                                cv2.VideoWriter_fourcc(*'avc1'),
+                                FPS, (W, H))
+
+    bg = background(W, H, 20, 20)
+    for fr in tqdm(range(FRAMES)):
+        x = int(fr * 2.5)
+        y = H // 2
+        r = 10 + fr // 8
+        frame = bg.copy()
+        cv2.circle(frame, (x, y), r, (255, 0, 0), -1)
+        cv2.circle(frame, (x, y), r + 10, (255, 255, 255), -1)
+        # cv2.imshow('1', frame)
+        # cv2.waitKey()
+        out_movie.write(frame)
+
+    out_movie.release()
+    os.system(f'open "{NAME}"')
 
 
-test_bt2()
+make_sample_movie()
