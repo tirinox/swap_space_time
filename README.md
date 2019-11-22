@@ -14,3 +14,14 @@ Requirements:
 How to run:
 
 `python3 swap_space_time.py --input example/input.mp4 --output example/output.mp4`
+
+## Visual example:
+
+Let's consider we have a video like this:
+
+![example/input.gif](example/input.gif)
+
+We swap X and Time:
+
+![example/output.gif](example/output.gif)
+
