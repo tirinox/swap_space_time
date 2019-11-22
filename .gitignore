@@ -1,4 +1,6 @@
 example/*.png
+example/t/
+example/*.mp4-frames/
 .idea/
 
 # Byte-compiled / optimized / DLL files
