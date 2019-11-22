@@ -123,6 +123,15 @@ def make_sample_movie():
 
         return img[:h, :w, :]
 
+
+    def background_grad(w, h, *args):
+        img = np.zeros((h, w, 3), dtype=np.uint8)
+        for x in range(w):
+            for y in range(h):
+                img[y, x] = (int(255 * x / w), int(255 * y / h), 0)
+        return img
+
+
     FPS = 30
     W, H = 120, 80
     FRAMES = 60
@@ -135,7 +144,7 @@ def make_sample_movie():
                                 cv2.VideoWriter_fourcc(*'mp4v'),
                                 FPS, (W, H))
 
-    bg = background(W, H, 20, 20)
+    bg = background_grad(W, H, 20, 20)
     for fr in tqdm(range(FRAMES)):
         x = int(fr * 2.5)
         y = H // 2
