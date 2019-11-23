@@ -80,7 +80,7 @@ if __name__ == '__main__':
         ArgParameter('limit', -1),
         ArgParameter('codec', False, 'mp4v'),
         ArgParameter('jpeg-quality', False, 80),
-        ArgParameter('batch', False, 10),
+        ArgParameter('batch', False, 60),
         ArgParameter('algo', 'mmap'),
         ArgFlag('write-frames', False)
     ])
