@@ -60,7 +60,6 @@ def do_work(config: dict):
 
             writer = lambda frame: out_movie.write(frame)
 
-
         # out video
         # width => time, time => width
         # (1280 x 720 x (100 frames) => 1280 (stretch out 100) x 720 (keep) x (1280 frames shrink to 100)
